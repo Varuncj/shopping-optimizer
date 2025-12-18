@@ -4,7 +4,7 @@ import json
 from collections import deque, defaultdict
 #adding cmd
 app = Flask(__name__)
-
+#Krishna is bad boy
 # Predefined items with their values, weights, and prices
 ITEMS = [
     {"id": 1, "name": "Milk", "value": 8, "weight": 2, "price": 3.50},
