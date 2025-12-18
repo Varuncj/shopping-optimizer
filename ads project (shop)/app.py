@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 import json
 from collections import deque, defaultdict
-
+#adding cmd
 app = Flask(__name__)
 
 # Predefined items with their values, weights, and prices
@@ -26,7 +26,7 @@ ITEMS = [
 
 # Item hashmap for O(1) lookup
 item_map = {item["id"]: item for item in ITEMS}
-
+#summa
 @app.route('/')
 def index():
     return render_template('index.html', items=ITEMS)
