@@ -1,0 +1,271 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping List Optimizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .items-container {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .form-container {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .results-container {
+            flex: 2;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result-item {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        .algorithm-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border-radius: 4px;
+            border-left: 4px solid #1E90FF;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Shopping List Optimizer</h1>
+    
+    <div class="container">
+        <div class="items-container">
+            <h2>Available Items</h2>
+            <table id="items-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Value</th>
+                        <th>Weight</th>
+                        <th>Price ($)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.value }}</td>
+                        <td>{{ item.weight }}</td>
+                        <td>{{ item.price }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="form-container">
+            <h2>Optimization Parameters</h2>
+            <form id="optimize-form">
+                <div class="form-group">
+                    <label for="max-weight">Maximum Weight:</label>
+                    <input type="number" id="max-weight" min="1" value="10">
+                </div>
+                <div class="form-group">
+                    <label for="max-price">Maximum Price ($):</label>
+                    <input type="number" id="max-price" min="1" step="0.01" value="20.00">
+                </div>
+                <div class="form-group">
+                    <label for="algorithm">Algorithm:</label>
+                    <select id="algorithm">
+                        <option value="knapsack">Knapsack</option>
+                        <option value="bfs">BFS (Breadth-First Search)</option>
+                        <option value="dfs">DFS (Depth-First Search)</option>
+                    </select>
+                </div>
+                <button type="submit">Find Optimal Items</button>
+            </form>
+            
+            <div class="algorithm-info">
+                <h3>About the Algorithms</h3>
+                <p><strong>Knapsack:</strong> Finds the optimal solution with the highest total value while respecting weight and price constraints.</p>
+                <p><strong>BFS:</strong> Explores all combinations level by level, finding all valid solutions.</p>
+                <p><strong>DFS:</strong> Explores combinations by going deeper before backtracking, finding all valid solutions.</p>
+                <p><strong>Hash Maps:</strong> Used for efficient item lookup and combination storage.</p>
+            </div>
+        </div>
+        
+        <div class="results-container">
+            <h2>Results</h2>
+            <div class="loading" id="loading">
+                <p>Finding optimal solutions...</p>
+            </div>
+            <div id="results">
+                <p>Set your constraints and click "Find Optimal Items" to see results.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('optimize-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const maxWeight = document.getElementById('max-weight').value;
+            const maxPrice = document.getElementById('max-price').value;
+            const algorithm = document.getElementById('algorithm').value;
+            
+            // Show loading indicator
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').innerHTML = '';
+            
+            try {
+                const response = await fetch('/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        max_weight: maxWeight,
+                        max_price: maxPrice,
+                        algorithm: algorithm
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading indicator
+                document.getElementById('loading').style.display = 'none';
+                
+                // Display results
+                displayResults(data, algorithm);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('results').innerHTML = '<p>Error finding optimal items. Please try again.</p>';
+            }
+        });
+        
+        function displayResults(results, algorithm) {
+            const resultsContainer = document.getElementById('results');
+            
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<p>No valid combinations found. Try increasing weight or price limits.</p>';
+                return;
+            }
+            
+            let html = `<h3>Found ${results.length} solution${results.length > 1 ? 's' : ''} using ${algorithm.toUpperCase()}</h3>`;
+            
+            results.forEach((result, index) => {
+                html += `
+                <div class="result-item">
+                    <h4>Solution ${index + 1} - Value: ${result.total_value}</h4>
+                    <p>Total Weight: ${result.total_weight} | Total Price: $${result.total_price.toFixed(2)}</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Value</th>
+                                <th>Weight</th>
+                                <th>Price ($)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                result.items.forEach(item => {
+                    html += `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${item.value}</td>
+                            <td>${item.weight}</td>
+                            <td>${item.price.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                </div>
+                `;
+            });
+            
+            resultsContainer.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
